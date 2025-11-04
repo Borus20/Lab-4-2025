@@ -1,8 +1,10 @@
 import functions.*;
 import functions.basic.*;
+import functions.meta.Power; // <-- ВОТ ИСПРАВЛЕНИЕ
 import java.io.*;
 
 public class Main {
+
     public static void main(String[] args) {
         
         // --- Задание 8, п.1: Sin и Cos ---
@@ -80,27 +82,67 @@ public class Main {
             e.printStackTrace();
         }
 
-        // --- Задание 9: Тест Сериализации ---
-        System.out.println("\n--- Задание 9: Тест Сериализации (Serializable) ---");
+        // --- Задание 9: Тест Сериализации (Serializable) ---
+        System.out.println("\n--- Задание 9: Тест Сериализации (Serializable, ArrayTabulatedFunction) ---");
         try {
             // log(exp(x)) = x
             Function f = Functions.composition(new Log(Math.E), new Exp());
-            TabulatedFunction tabFunc = TabulatedFunctions.tabulate(f, 0, 10, 11);
+            // Используем ArrayTabulatedFunction для теста Serializable
+            TabulatedFunction tabFunc = TabulatedFunctions.tabulate(f, 0, 10, 11); 
             
             // Сериализация (запись объекта)
-            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("serialized-function.ser"));
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("serialized-array.ser"));
             out.writeObject(tabFunc);
             out.close();
 
             // Десериализация (чтение объекта)
-            ObjectInputStream in = new ObjectInputStream(new FileInputStream("serialized-function.ser"));
+            ObjectInputStream in = new ObjectInputStream(new FileInputStream("serialized-array.ser"));
             TabulatedFunction readFunc = (TabulatedFunction) in.readObject();
             in.close();
 
             // Сравнение
-            System.out.println("Сравнение исходной и десериализованной функции:");
+            System.out.println("Сравнение исходной и десериализованной функции (Array):");
             for (double x = 0; x <= 10; x += 1) {
                 System.out.printf("x=%.1f, Orig(x)=%.2f, Read(x)=%.2f\n", x, tabFunc.getFunctionValue(x), readFunc.getFunctionValue(x));
+            }
+
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        // --- ДОБАВЛЕННЫЙ ТЕСТ: Задание 9 (Externalizable) ---
+        System.out.println("\n--- Задание 9: Тест Сериализации (Externalizable, LinkedListTabulatedFunction) ---");
+        try {
+            // Создаем функцию f(x) = x^2
+            Function sqr = new Power(new Function() {
+                public double getLeftDomainBorder() { return Double.NEGATIVE_INFINITY; }
+                public double getRightDomainBorder() { return Double.POSITIVE_INFINITY; }
+                public double getFunctionValue(double x) { return x; }
+            }, 2);
+            
+            // Создаем табулированную функцию на основе LinkedListTabulatedFunction
+            double[] values = {0, 1, 4, 9, 16};
+            TabulatedFunction tabFuncLinked = new LinkedListTabulatedFunction(0, 4, values);
+            
+            System.out.println("Исходная функция (LinkedList):");
+            for (int i = 0; i < tabFuncLinked.getPointsCount(); i++) {
+                 System.out.printf("Point %d: (%.1f, %.1f)\n", i, tabFuncLinked.getPointX(i), tabFuncLinked.getPointY(i));
+            }
+
+            // Сериализация (запись объекта)
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("serialized-linkedlist.ser"));
+            out.writeObject(tabFuncLinked);
+            out.close();
+
+            // Десериализация (чтение объекта)
+            ObjectInputStream in = new ObjectInputStream(new FileInputStream("serialized-linkedlist.ser"));
+            TabulatedFunction readFuncLinked = (TabulatedFunction) in.readObject();
+            in.close();
+
+            // Сравнение
+            System.out.println("Сравнение исходной и десериализованной функции (LinkedList):");
+            for (double x = 0; x <= 4; x += 0.5) {
+                System.out.printf("x=%.1f, Orig(x)=%.2f, Read(x)=%.2f\n", x, tabFuncLinked.getFunctionValue(x), readFuncLinked.getFunctionValue(x));
             }
 
         } catch (IOException | ClassNotFoundException e) {
