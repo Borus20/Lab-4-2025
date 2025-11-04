@@ -1,0 +1,17 @@
+# Java build output
+/bin/
+*.class
+
+# IDE metadata
+.vscode/
+.idea/
+*.iml
+
+# Lab 4 generated files (Задание 10)
+*.dat
+*.txt
+*.ser
+
+# OS generated files
+.DS_Store
+Thumbs.db
